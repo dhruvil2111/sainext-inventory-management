@@ -1,0 +1,67 @@
+/* ----------------------------------------------------------------------------
+   Sainext design tokens - "Refined Charcoal + Amber".
+
+   Deep charcoal/navy surfaces with a restrained amber accent and premium
+   neutrals. Values are raw "R G B" channel triplets so Tailwind opacity
+   modifiers compose them as rgb(var(--c-*) / <alpha-value>). When used directly
+   as a CSS color, wrap: rgb(var(--c-bg)).
+---------------------------------------------------------------------------- */
+:root {
+  /* brand surfaces (sidebar / inverted panels) */
+  --c-primary: 18 24 36;        /* #121824 deep charcoal-navy */
+  --c-primary-2: 26 33 48;      /* #1a2130 raised charcoal */
+  --c-primary-fg: 233 237 244;
+
+  /* accent - restrained amber (not bright gold) */
+  --c-accent: 201 138 26;       /* #c98a1a */
+  --c-accent-strong: 180 122 18;
+  --c-accent-fg: 24 18 6;
+
+  /* app neutrals (light mode) */
+  --c-bg: 247 248 250;          /* #f7f8fa cool paper */
+  --c-surface: 255 255 255;
+  --c-surface-2: 243 245 248;   /* subtle raised */
+  --c-elevated: 255 255 255;
+  --c-border: 226 230 236;      /* hairline */
+  --c-border-strong: 209 214 222;
+  --c-text: 23 30 42;           /* near-black slate */
+  --c-text-muted: 100 110 124;
+  --c-ring: 201 138 26;
+
+  /* status */
+  --c-success: 22 150 99;
+  --c-danger: 209 58 54;
+  --c-warning: 191 132 24;
+  --c-info: 41 98 196;
+
+  --radius: 10px;          /* cards */
+  --radius-sm: 8px;        /* controls */
+  --shadow-color: 18 24 36;
+}
+
+.dark {
+  --c-primary: 12 17 26;        /* even deeper for sidebar vs app bg */
+  --c-primary-2: 22 29 42;
+  --c-primary-fg: 233 237 244;
+
+  --c-accent: 230 165 67;       /* #e6a543 brighter amber for dark contrast */
+  --c-accent-strong: 214 146 46;
+  --c-accent-fg: 24 18 6;
+
+  --c-bg: 13 18 27;            /* #0d121b app background */
+  --c-surface: 21 28 40;       /* #151c28 cards */
+  --c-surface-2: 28 37 52;     /* #1c2534 raised */
+  --c-elevated: 26 34 49;
+  --c-border: 38 48 64;        /* #263040 */
+  --c-border-strong: 52 64 84;
+  --c-text: 230 235 242;
+  --c-text-muted: 148 159 176;
+  --c-ring: 230 165 67;
+
+  --c-success: 45 191 133;
+  --c-danger: 240 102 94;
+  --c-warning: 232 173 74;
+  --c-info: 96 150 240;
+
+  --shadow-color: 0 0 0;
+}
