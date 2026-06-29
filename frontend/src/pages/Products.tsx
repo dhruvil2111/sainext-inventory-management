@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, Button, Badge, Modal, TableSkeleton, EmptyState } from "@/components/ui";
+import { ImportModal } from "@/components/ImportModal";
 import type { Product, Paginated, Category } from "@/types";
 import { Tag } from "@phosphor-icons/react";
 
@@ -27,6 +28,7 @@ export default function Products() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState<any>(empty);
+  const [showImport, setShowImport] = useState(false);
   const canPrice = can("Products:view_price");
 
   const loadCategories = () => api.get("/products/categories").then(setCategories).catch(() => {});
@@ -82,7 +84,10 @@ export default function Products() {
   return (
     <div>
       <PageHeader icon={Tag} title="Product Master" subtitle="Pattern numbers, design codes & specifications"
-        actions={can("Products:create") && <Button onClick={openCreate}>+ New Product</Button>} />
+        actions={can("Products:create") && <>
+          <Button variant="outline" onClick={() => setShowImport(true)}>Import CSV</Button>
+          <Button onClick={openCreate}>+ New Product</Button>
+        </>} />
 
       <Card className="mb-4 p-3">
         <form onSubmit={(e) => { e.preventDefault(); load(); }} className="flex gap-2">
@@ -185,6 +190,12 @@ export default function Products() {
             <input className="input" value={form.remarks || ""} onChange={set("remarks")} /></div>
         </form>
       </Modal>
+
+      {showImport && (
+        <ImportModal title="Import products" templatePath="/products/import-template"
+          importPath="/products/import" onClose={() => setShowImport(false)}
+          onDone={() => load()} />
+      )}
     </div>
   );
 }

@@ -1,4 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+import csv
+import io
+from datetime import date
+
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -102,6 +107,77 @@ def stock_check(
 # --------------------------------------------------------------------------- #
 # Mutations (Stock Inward module). All wrapped in a single transaction.
 # --------------------------------------------------------------------------- #
+STOCK_IMPORT_COLUMNS = [
+    "product_code", "warehouse_code", "quantity", "unit", "item_type",
+    "batch_no", "batch_date", "roll_no", "box_count", "purchase_date",
+    "inward_date", "remarks",
+]
+
+
+@router.get("/import-template")
+def stock_import_template(_=Depends(require_permission("Stock Inward:create"))):
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(STOCK_IMPORT_COLUMNS)
+    w.writerow(["55440H/PF-102", "WH-A", "60", "SQM", "ROLL", "24CA",
+                "2024-08-03", "R-100", "", "", "2024-08-05", "opening stock"])
+    buf.seek(0)
+    return StreamingResponse(iter([buf.getvalue()]), media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=stock_template.csv"})
+
+
+def _pdate(s):
+    s = (s or "").strip()
+    return date.fromisoformat(s) if s else None
+
+
+@router.post("/import")
+def stock_import(file: UploadFile = File(...), db: Session = Depends(get_db),
+                 actor: User = Depends(require_permission("Stock Inward:create"))):
+    try:
+        text = file.file.read().decode("utf-8-sig")
+    except Exception:
+        raise HTTPException(400, "Could not read file; expected UTF-8 CSV")
+    products = {p.product_code: p for p in db.execute(select(Product)).scalars().all()}
+    whs = {w.code: w for w in db.execute(select(Warehouse)).scalars().all()}
+    reader = csv.DictReader(io.StringIO(text))
+    created, errors = 0, []
+    for i, row in enumerate(reader, start=2):
+        try:
+            p = products.get((row.get("product_code") or "").strip())
+            if not p:
+                raise ValueError(f"unknown product_code '{row.get('product_code')}'")
+            w = whs.get((row.get("warehouse_code") or "").strip())
+            if not w:
+                raise ValueError(f"unknown warehouse_code '{row.get('warehouse_code')}'")
+            qty = float(row["quantity"])
+            box = (row.get("box_count") or "").strip()
+            stock_svc.inward(
+                db, product_id=p.id, warehouse_id=w.id, quantity=qty,
+                unit=(row.get("unit") or p.unit).strip(),
+                item_type=StockItemType((row.get("item_type") or "ROLL").strip().upper()),
+                batch_no=(row.get("batch_no") or "").strip() or None,
+                batch_date=_pdate(row.get("batch_date")),
+                roll_no=(row.get("roll_no") or "").strip() or None,
+                box_count=int(box) if box else None,
+                purchase_date=_pdate(row.get("purchase_date")),
+                inward_date=_pdate(row.get("inward_date")),
+                remarks=(row.get("remarks") or "").strip() or None,
+                created_by=actor.id,
+            )
+            db.flush()
+            created += 1
+        except Exception as e:
+            errors.append({"row": i, "message": str(e)})
+    if created:
+        log_action(db, actor.id, "Stock Inward", "import", "StockItem", None,
+                   new_value={"created": created, "failed": len(errors)})
+        db.commit()
+    else:
+        db.rollback()
+    return {"created": created, "failed": len(errors), "errors": errors[:50]}
+
+
 @router.post("/inward", response_model=StockItemOut, status_code=201)
 def stock_inward(payload: InwardRequest, db: Session = Depends(get_db),
                  actor: User = Depends(require_permission("Stock Inward:create"))):

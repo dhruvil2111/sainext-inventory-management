@@ -1,4 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+import csv
+import io
+
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func, or_
 from sqlalchemy.orm import Session
 
@@ -12,6 +16,12 @@ from app.schemas import (
 from app.services.audit import log_action
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+IMPORT_COLUMNS = [
+    "pattern_no", "product_code", "name", "collection_name", "brand",
+    "product_type", "unit", "unit_size", "thickness", "roll_size",
+    "standard_roll_qty", "price", "status",
+]
 
 
 def _out(p: Product) -> ProductOut:
@@ -88,6 +98,63 @@ def create_category(payload: CategoryCreate, db: Session = Depends(get_db),
     db.commit()
     db.refresh(cat)
     return cat
+
+
+@router.get("/import-template")
+def import_template(_=Depends(require_permission("Products:create"))):
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(IMPORT_COLUMNS)
+    w.writerow(["PF-300", "DEMO-PF-300", "Demo Vinyl", "DEMO-COLL", "DemoBrand",
+                "ROLL", "SQM", "2M x 30M", "0.65MM", "2M x 30M", "60", "500", "CONTINUED"])
+    buf.seek(0)
+    return StreamingResponse(iter([buf.getvalue()]), media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=products_template.csv"})
+
+
+@router.post("/import")
+def import_products(file: UploadFile = File(...), db: Session = Depends(get_db),
+                    actor: User = Depends(require_permission("Products:create"))):
+    try:
+        text = file.file.read().decode("utf-8-sig")
+    except Exception:
+        raise HTTPException(400, "Could not read file; expected UTF-8 CSV")
+    reader = csv.DictReader(io.StringIO(text))
+    created, errors = 0, []
+    for i, row in enumerate(reader, start=2):   # row 1 is the header
+        try:
+            code = (row.get("product_code") or "").strip()
+            if not code or not (row.get("pattern_no") or "").strip() or not (row.get("name") or "").strip():
+                raise ValueError("pattern_no, product_code and name are required")
+            if db.execute(select(Product).where(Product.product_code == code)).scalar_one_or_none():
+                raise ValueError(f"product_code '{code}' already exists")
+            ptype = ProductType((row.get("product_type") or "ROLL").strip().upper())
+            status = ProductStatus((row.get("status") or "CONTINUED").strip().upper())
+            price = float(row["price"]) if (row.get("price") or "").strip() else 0.0
+            srq = (row.get("standard_roll_qty") or "").strip()
+            db.add(Product(
+                pattern_no=row["pattern_no"].strip(), product_code=code,
+                name=row["name"].strip(),
+                collection_name=(row.get("collection_name") or "").strip() or None,
+                brand=(row.get("brand") or "").strip() or None,
+                product_type=ptype, unit=(row.get("unit") or "SQM").strip(),
+                unit_size=(row.get("unit_size") or "").strip() or None,
+                thickness=(row.get("thickness") or "").strip() or None,
+                roll_size=(row.get("roll_size") or "").strip() or None,
+                standard_roll_qty=float(srq) if srq else None,
+                price=price, status=status, is_active=True,
+            ))
+            db.flush()
+            created += 1
+        except Exception as e:
+            errors.append({"row": i, "message": str(e)})
+    if created:
+        log_action(db, actor.id, "Products", "import", "Product", None,
+                   new_value={"created": created, "failed": len(errors)})
+        db.commit()
+    else:
+        db.rollback()
+    return {"created": created, "failed": len(errors), "errors": errors[:50]}
 
 
 @router.post("", response_model=ProductOut, status_code=201)

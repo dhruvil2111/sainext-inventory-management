@@ -4,6 +4,7 @@ import { List, SignOut, Cube } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
 import { NAV, NAV_GROUPS, NavItem } from "@/lib/nav";
 import { ThemeToggle } from "./ThemeToggle";
+import { NotificationBell } from "./NotificationBell";
 
 function Brand({ collapsed = false }: { collapsed?: boolean }) {
   return (
@@ -75,6 +76,7 @@ export function AppLayout() {
             <List size={20} />
           </button>
           <div className="flex-1" />
+          <NotificationBell />
           <ThemeToggle />
           <div className="mx-1 h-6 w-px bg-line" />
           <div className="flex items-center gap-2.5">

@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, Badge, TableSkeleton } from "@/components/ui";
+import { DashboardCharts } from "@/components/DashboardCharts";
 
 interface Stats {
   users: number; warehouses: number; products: number; dealers: number;
@@ -73,6 +74,8 @@ export default function Dashboard() {
           })}
         </div>
       )}
+
+      <DashboardCharts />
 
       {blocks && (
         <div className="mt-7">

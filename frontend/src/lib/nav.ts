@@ -4,7 +4,7 @@ import type { Icon } from "@phosphor-icons/react";
 import {
   SquaresFour, MagnifyingGlass, TrayArrowDown, Scroll, LockKey, Receipt,
   Tag, Warehouse, Handshake, ChartLineUp, Truck, Wallet, ChartBar,
-  UsersThree, ShieldCheck, Gear,
+  UsersThree, ShieldCheck, Gear, ClockCounterClockwise,
 } from "@phosphor-icons/react";
 
 export interface NavItem {
@@ -36,6 +36,7 @@ export const NAV: NavItem[] = [
 
   { label: "Users", path: "/users", perm: "Users:view", icon: UsersThree, group: "Administration", ready: true },
   { label: "Roles & Permissions", path: "/roles", perm: "Roles & Permissions:view", icon: ShieldCheck, group: "Administration", ready: true },
+  { label: "Audit Log", path: "/audit-logs", perm: "Roles & Permissions:view", icon: ClockCounterClockwise, group: "Administration", ready: true },
   { label: "Settings", path: "/settings", perm: "Settings:view", icon: Gear, group: "Administration", ready: true },
 ];
 

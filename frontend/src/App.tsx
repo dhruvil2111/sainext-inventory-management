@@ -19,6 +19,7 @@ import SalesmanDashboard from "@/pages/SalesmanDashboard";
 import AccountsDashboard from "@/pages/AccountsDashboard";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
+import AuditLog from "@/pages/AuditLog";
 import ComingSoon from "@/pages/ComingSoon";
 
 function P({ code, children }: { code: string; children: JSX.Element }) {
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="reports" element={<P code="Reports:view"><Reports /></P>} />
 
         <Route path="settings" element={<P code="Settings:view"><Settings /></P>} />
+        <Route path="audit-logs" element={<P code="Roles & Permissions:view"><AuditLog /></P>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

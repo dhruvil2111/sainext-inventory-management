@@ -5,6 +5,7 @@ import { useToast } from "@/context/ToastContext";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, Button, Badge, Modal, TableSkeleton, EmptyState } from "@/components/ui";
 import { ProductPicker } from "@/components/ProductPicker";
+import { ImportModal } from "@/components/ImportModal";
 import type { Product, Warehouse, StockItem, Paginated } from "@/types";
 import { Package, TrayArrowDown } from "@phosphor-icons/react";
 
@@ -15,13 +16,20 @@ export default function StockInward() {
   const { push } = useToast();
   const [tab, setTab] = useState<"new" | "items">("new");
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [showImport, setShowImport] = useState(false);
   const canEdit = can("Stock Inward:edit");
 
   useEffect(() => { api.get("/warehouses").then(setWarehouses).catch(() => {}); }, []);
 
   return (
     <div>
-      <PageHeader icon={TrayArrowDown} title="Stock Inward" subtitle="Record purchases, inward entries, adjustments & transfers" />
+      <PageHeader icon={TrayArrowDown} title="Stock Inward" subtitle="Record purchases, inward entries, adjustments & transfers"
+        actions={can("Stock Inward:create") && <Button variant="outline" onClick={() => setShowImport(true)}>Import CSV</Button>} />
+      {showImport && (
+        <ImportModal title="Import stock inward" templatePath="/stock/import-template"
+          importPath="/stock/import" onClose={() => setShowImport(false)}
+          onDone={() => setTab("items")} />
+      )}
       <div className="mb-4 flex gap-2">
         <button className={`btn ${tab === "new" ? "btn-accent" : "btn-outline"}`} onClick={() => setTab("new")}>New Entry</button>
         <button className={`btn ${tab === "items" ? "btn-accent" : "btn-outline"}`} onClick={() => setTab("items")}>Stock Items</button>

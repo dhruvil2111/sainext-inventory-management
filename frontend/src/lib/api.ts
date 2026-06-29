@@ -127,6 +127,21 @@ export const api = {
   del(path: string) {
     return request(path, { method: "DELETE" });
   },
+  async upload(path: string, file: File) {
+    const fd = new FormData();
+    fd.append("file", file);
+    // refresh first if we have a refresh token, to avoid a failed multipart retry
+    const res = await fetch(`${BASE}${path}`, {
+      method: "POST", headers: authHeaders(), body: fd,
+    });
+    if (res.status === 401 && getRefresh() && (await tryRefresh())) {
+      const retry = await fetch(`${BASE}${path}`, {
+        method: "POST", headers: authHeaders(), body: fd,
+      });
+      return parse(retry);
+    }
+    return parse(res);
+  },
   async download(path: string, fallbackName = "download") {
     const res: Response = await request(path, { raw: true });
     if (!res.ok) throw new ApiError(res.status, `Download failed (${res.status})`);
