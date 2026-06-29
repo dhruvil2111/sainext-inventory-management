@@ -5,6 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { NAV, NAV_GROUPS, NavItem } from "@/lib/nav";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
+import { OfflineIndicator } from "./OfflineIndicator";
+import { InstallPrompt } from "./InstallPrompt";
 
 function Brand({ collapsed = false }: { collapsed?: boolean }) {
   return (
@@ -97,14 +99,19 @@ export function AppLayout() {
           </div>
         </header>
 
+        <OfflineIndicator />
+
         <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 md:px-6 md:py-7 md:pb-8 print:overflow-visible print:p-0">
           <div className="mx-auto max-w-[1400px] animate-fade-in print:max-w-none">
             <Outlet />
           </div>
         </main>
 
+        <InstallPrompt />
+
         {/* Mobile bottom nav */}
-        <nav className="fixed bottom-0 left-0 right-0 z-30 flex border-t border-line bg-surface/95 backdrop-blur md:hidden print:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-30 flex border-t border-line bg-surface/95 backdrop-blur md:hidden print:hidden"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           {items.slice(0, 5).map((i) => (
             <NavLink key={i.path} to={i.path} end={i.path === "/"}
               className={({ isActive }) =>
