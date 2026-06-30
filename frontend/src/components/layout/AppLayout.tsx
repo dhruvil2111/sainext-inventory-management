@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { List, SignOut, Cube } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
+import { useBranding } from "@/context/BrandingContext";
 import { NAV, NAV_GROUPS, NavItem } from "@/lib/nav";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
@@ -9,14 +10,21 @@ import { OfflineIndicator } from "./OfflineIndicator";
 import { InstallPrompt } from "./InstallPrompt";
 
 function Brand({ collapsed = false }: { collapsed?: boolean }) {
+  const { branding } = useBranding();
+  const name = branding.company_name || "Sainext";
   return (
     <div className="flex items-center gap-2.5 px-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-fg">
-        <Cube size={18} weight="fill" />
-      </div>
+      {branding.company_logo ? (
+        <img src={branding.company_logo} alt={name}
+          className="h-8 w-8 rounded-lg object-contain" />
+      ) : (
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-fg">
+          <Cube size={18} weight="fill" />
+        </div>
+      )}
       {!collapsed && (
         <div className="leading-tight">
-          <div className="text-sm font-bold tracking-tight text-brand-fg">Sainext</div>
+          <div className="text-sm font-bold tracking-tight text-brand-fg">{name}</div>
           <div className="text-2xs text-brand-fg/45">Inventory OS</div>
         </div>
       )}

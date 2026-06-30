@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Cube, Lightning, ShieldCheck, Stack, ArrowRight } from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
+import { useBranding } from "@/context/BrandingContext";
 import { Button, Spinner } from "@/components/ui";
 
 const DEMO = [
@@ -19,6 +20,8 @@ const HIGHLIGHTS = [
 
 export default function Login() {
   const { login } = useAuth();
+  const { branding } = useBranding();
+  const name = branding.company_name || "Sainext";
   const navigate = useNavigate();
   const loc = useLocation() as any;
   const [email, setEmail] = useState("owner@sainext.app");
@@ -46,10 +49,14 @@ export default function Login() {
           style={{ background: "radial-gradient(600px circle at 30% 20%, rgb(var(--c-accent) / 0.16), transparent 55%), radial-gradient(500px circle at 80% 90%, rgb(var(--c-accent) / 0.1), transparent 50%)" }}
         />
         <div className="relative flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-fg">
-            <Cube size={20} weight="fill" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-brand-fg">Sainext</span>
+          {branding.company_logo ? (
+            <img src={branding.company_logo} alt={name} className="h-9 w-9 rounded-lg object-contain" />
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-fg">
+              <Cube size={20} weight="fill" />
+            </div>
+          )}
+          <span className="text-lg font-bold tracking-tight text-brand-fg">{name}</span>
         </div>
 
         <div className="relative max-w-md">
@@ -76,10 +83,14 @@ export default function Login() {
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-fg">
-                <Cube size={20} weight="fill" />
-              </div>
-              <span className="text-lg font-bold tracking-tight text-ink">Sainext</span>
+              {branding.company_logo ? (
+                <img src={branding.company_logo} alt={name} className="h-9 w-9 rounded-lg object-contain" />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-fg">
+                  <Cube size={20} weight="fill" />
+                </div>
+              )}
+              <span className="text-lg font-bold tracking-tight text-ink">{name}</span>
             </div>
           </div>
 

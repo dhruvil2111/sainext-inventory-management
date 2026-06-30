@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { api, setTokens, clearToken, getToken, getRefresh } from "@/lib/api";
-import { applyBranding } from "@/lib/branding";
 import type { Me } from "@/types";
 
 interface AuthCtx {
@@ -23,7 +22,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const me = await api.get("/auth/me");
       setUser(me);
-      api.get("/settings/branding").then(applyBranding).catch(() => {});
     } catch {
       clearToken();
       setUser(null);
@@ -39,7 +37,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokens(res.access_token, res.refresh_token);
     const me = await api.get("/auth/me");
     setUser(me);
-    api.get("/settings/branding").then(applyBranding).catch(() => {});
   };
 
   const logout = () => {

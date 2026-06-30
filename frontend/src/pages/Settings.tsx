@@ -1,22 +1,48 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useBranding } from "@/context/BrandingContext";
 import { useToast } from "@/context/ToastContext";
 import { applyBranding } from "@/lib/branding";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, Button, Spinner } from "@/components/ui";
-import { Gear } from "@phosphor-icons/react";
+import { Gear, UploadSimple, Trash } from "@phosphor-icons/react";
 
 export default function Settings() {
   const { can } = useAuth();
+  const { reload } = useBranding();
   const { push } = useToast();
   const [form, setForm] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const logoRef = useRef<HTMLInputElement>(null);
   const canEdit = can("Settings:edit");
 
   useEffect(() => {
     api.get("/settings").then(setForm).catch((e) => push(e.message, "error"));
   }, []); // eslint-disable-line
+
+  const uploadLogo = async (f: File) => {
+    setLogoBusy(true);
+    try {
+      const r = await api.upload("/settings/logo", f);
+      setForm((prev: any) => ({ ...prev, company_logo: r.company_logo }));
+      reload();
+      push("Logo updated", "success");
+    } catch (e: any) { push(e.message, "error"); }
+    finally { setLogoBusy(false); }
+  };
+
+  const removeLogo = async () => {
+    setLogoBusy(true);
+    try {
+      await api.del("/settings/logo");
+      setForm((prev: any) => ({ ...prev, company_logo: null }));
+      reload();
+      push("Logo removed", "success");
+    } catch (e: any) { push(e.message, "error"); }
+    finally { setLogoBusy(false); }
+  };
 
   const set = (k: string) => (e: any) => {
     const next = { ...form, [k]: e.target.value };
@@ -51,6 +77,34 @@ export default function Settings() {
           <div>
             <label className="label">Currency</label>
             <input className="input" value={form.currency || ""} onChange={set("currency")} disabled={!canEdit} />
+          </div>
+
+          <div>
+            <label className="label">Company logo</label>
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-line bg-brand">
+                {form.company_logo
+                  ? <img src={form.company_logo} alt="Logo" className="h-full w-full object-contain" />
+                  : <span className="text-2xs text-brand-fg/50">No logo</span>}
+              </div>
+              {canEdit && (
+                <div className="flex flex-col gap-2">
+                  <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif"
+                    className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} />
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" className="!py-1.5" disabled={logoBusy}
+                      onClick={() => logoRef.current?.click()}>
+                      {logoBusy ? <Spinner className="h-4 w-4" /> : <><UploadSimple size={15} weight="bold" /> Upload</>}
+                    </Button>
+                    {form.company_logo && (
+                      <Button type="button" variant="ghost" className="!py-1.5 text-danger" disabled={logoBusy}
+                        onClick={removeLogo}><Trash size={15} weight="bold" /> Remove</Button>
+                    )}
+                  </div>
+                  <p className="text-2xs text-muted">PNG, JPG, SVG, WEBP or GIF · max 1 MB. Shown in the sidebar and sign-in.</p>
+                </div>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

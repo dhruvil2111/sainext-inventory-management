@@ -5,6 +5,7 @@ export interface Branding {
   currency?: string;
   brand_primary?: string;
   brand_accent?: string;
+  company_logo?: string | null;   // base64 data URL when uploaded
 }
 
 function hexToTriplet(hex?: string): string | null {

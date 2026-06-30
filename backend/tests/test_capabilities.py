@@ -62,3 +62,28 @@ def test_notifications(client, owner, auth):
     # dispatch user sees a restricted set (no accounts dues item)
     nd = client.get("/api/notifications", headers=auth(client, "dispatch")).json()
     assert all(i["type"] != "dues" for i in nd["items"])
+
+
+def test_branding_public(client):
+    # branding is now public (no auth) so the login screen can be branded
+    r = client.get("/api/settings/branding")
+    assert r.status_code == 200
+    assert "company_logo" in r.json()
+
+
+def test_logo_upload_validation_and_flow(client, owner, auth):
+    import io as _io
+    png = (b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)  # minimal bytes; type from header
+    # wrong type rejected
+    bad = {"file": ("x.txt", _io.BytesIO(b"hello"), "text/plain")}
+    assert client.post("/api/settings/logo", headers=owner, files=bad).status_code == 400
+    # valid image accepted
+    good = {"file": ("logo.png", _io.BytesIO(png), "image/png")}
+    r = client.post("/api/settings/logo", headers=owner, files=good)
+    assert r.status_code == 200 and r.json()["company_logo"].startswith("data:image/png;base64,")
+    assert client.get("/api/settings/branding").json()["company_logo"].startswith("data:image/png")
+    # non-admin cannot upload
+    assert client.post("/api/settings/logo", headers=auth(client, "salesman"), files=good).status_code == 403
+    # remove
+    assert client.delete("/api/settings/logo", headers=owner).status_code == 200
+    assert client.get("/api/settings/branding").json()["company_logo"] is None
